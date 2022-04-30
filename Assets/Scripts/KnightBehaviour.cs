@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
+using System.IO;
 using UnityEngine.UI;
 
 public class KnightBehaviour : MonoBehaviour {
@@ -11,26 +13,33 @@ public class KnightBehaviour : MonoBehaviour {
 	private bool attackWindowActive;
 	private bool pullWindowActive;
 	private string[] typesOfHerbs;
-	private float health = 100;
+	private string[] typesOfCrystals;
+	private int specialHatchetLives;
+	private float health = 1000;
 	public string timePlayed;
 	public int herbCount;
 	public bool hasCrystal;
+	public int greenCrystalCount;
 	public bool isGameOver;
 	public HUD hud;
 	private bool hasKit;
+	private bool hasSpecialHatchet;
 	private int hatchetLifes;
 	// Use this for initialization
-	void Start () {
+	void Start() {
 		isGameOver = false;
+		greenCrystalCount = 0;
+		hasSpecialHatchet = false;
 		typesOfHerbs = new string[] { "Herb1", "Herb2", "Herb3" };
+		typesOfCrystals = new string[] { "GreenCrystal", "GreenCrystal1" };
 		Time.timeScale = 1;
 		herbCount = 0;
 		animator = GetComponent<Animator>();
 		planet = GameObject.Find("Planet");
 
-        // constantly decrementing health with a given interval
-        if (!isGameOver)
-        {
+		// constantly decrementing health with a given interval
+		if (!isGameOver)
+		{
 			InvokeRepeating("DecrementHealth", 0, 0.8f);
 		}
 	}
@@ -38,71 +47,121 @@ public class KnightBehaviour : MonoBehaviour {
 	{
 		Time.timeScale = 0;
 	}
-	public void DecrementHealth(){
+	public void DecrementHealth() {
 		health--;
 		if (health <= 0) {
 			// gameover
-			timePlayed = ""+Time.timeSinceLevelLoad;
+			timePlayed = "" + Time.timeSinceLevelLoad;
 			isGameOver = true;
 			PauseGame();
+			var music = GameObject.Find("Music").GetComponent<AudioSource>();
+			var youDiedSfx = Resources.Load<AudioClip>(@"Music/youDied");
+			if (music.clip != youDiedSfx)
+			{
+				music.clip = youDiedSfx;
+				music.Play();
+				music.loop = false;
+			}
 			hud.showGameOverDialog();
 		}
 	}
-	
+
 	// Update is called once per frame
-	void Update () {
-        if (!isGameOver)
-        {
+	void Update() {
+		if (!isGameOver)
+		{
 			UpdateInterface();
 			PlayerControls();
 		}
 	}
 
 	// synchronize all script properties and flags with UI elements
-	void UpdateInterface(){
+	void UpdateInterface() {
 		GameObject.Find("Slider").GetComponent<Slider>().value = health;
 		GameObject.Find("Fill").GetComponent<Image>().color =
 			Color.Lerp(Color.red, Color.green, health / 100f);
-        foreach (var typeOfHerb in typesOfHerbs)
-        {
+		foreach (var typeOfHerb in typesOfHerbs)
+		{
 			foreach (GameObject herb in GameObject.FindGameObjectsWithTag(typeOfHerb))
 			{
 				herb.GetComponent<Image>().color = Color.black;
 			}
 		}
-        if (herbCount > 0)
-        {
+		if (herbCount > 0)
+		{
 			foreach (GameObject herb in GameObject.FindGameObjectsWithTag("Herb1"))
 			{
 				herb.GetComponent<Image>().color = Color.white;
 			}
 			if (herbCount > 1)
-            {
+			{
 				foreach (GameObject herb in GameObject.FindGameObjectsWithTag("Herb2"))
 				{
 					herb.GetComponent<Image>().color = Color.white;
 				}
 			}
-            if (herbCount > 2)
-            {
+			if (herbCount > 2)
+			{
 				foreach (GameObject herb in GameObject.FindGameObjectsWithTag("Herb3"))
 				{
 					herb.GetComponent<Image>().color = Color.white;
 				}
 			}
 		}
-		
-		foreach (GameObject herb in GameObject.FindGameObjectsWithTag("Crystal")){
-			herb.GetComponent<Image>().color = hasCrystal ? Color.white : Color.black;
+		if (herbCount > 2)
+		{
+			GameObject.FindGameObjectWithTag("Spell").GetComponent<Image>().color = Color.white;
 		}
-		GameObject.Find("Hatchet").GetComponent<Image>().color = 
+		else
+		{
+			GameObject.FindGameObjectWithTag("Spell").GetComponent<Image>().color = Color.black;
+		}
+		if (greenCrystalCount > 1 && herbCount > 0)
+		{
+			GameObject.FindGameObjectWithTag("SpecialHatchet").GetComponent<Image>().color = Color.green;
+		}
+		else
+		{
+			GameObject.FindGameObjectWithTag("SpecialHatchet").GetComponent<Image>().color = Color.black;
+		}
+		if (herbCount > 2)
+		{
+			GameObject.FindGameObjectWithTag("Spell").GetComponent<Image>().color = Color.white;
+		}
+        else
+        {
+			GameObject.FindGameObjectWithTag("Spell").GetComponent<Image>().color = Color.black;
+		}
+		if (greenCrystalCount > 0)
+		{
+			GameObject.FindGameObjectWithTag("GreenCrystal").GetComponent<Image>().color = Color.green;
+		}
+		else
+		{
+			GameObject.FindGameObjectWithTag("GreenCrystal").GetComponent<Image>().color = Color.black;
+
+		}
+		if (greenCrystalCount > 1)
+		{
+			GameObject.FindGameObjectWithTag("GreenCrystal1").GetComponent<Image>().color = Color.green;
+		}
+		else
+		{
+			GameObject.FindGameObjectWithTag("GreenCrystal1").GetComponent<Image>().color = Color.black;
+
+		}
+		foreach (GameObject crystal in GameObject.FindGameObjectsWithTag("Crystal"))
+		{
+			crystal.GetComponent<Image>().color = hasCrystal ? Color.white : Color.black;
+		}
+		GameObject.Find("Hatchet").GetComponent<Image>().color =
 			hatchetLifes > 0 ? Color.white : Color.black;
-		GameObject.Find("Kit").GetComponent<Image>().color = 
+		GameObject.Find("Kit").GetComponent<Image>().color =
 			hasKit ? Color.white : Color.black;
 	}
 
 	// key presses and actions
-	void PlayerControls(){		
+	void PlayerControls() {
 		if (Input.GetKey(KeyCode.A)) {
 			Move(-1);
 		}
@@ -110,58 +169,113 @@ public class KnightBehaviour : MonoBehaviour {
 			Move(1);
 		}
 		// setting animator properties to cause animation transitions!!
-		if (!Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.D) ){
+		if (!Input.GetKey(KeyCode.A) && !Input.GetKey(KeyCode.D)) {
 			animator.SetBool("IsRunning", false);
 		}
-		if (Input.GetKeyDown(KeyCode.F)){
+		if (Input.GetKeyDown(KeyCode.F)) {
 			animator.SetTrigger("Attack");
 		}
 
 		// crafting logic
-		if (Input.GetKeyDown(KeyCode.E)){
-			if (hatchetLifes > 0){
+		if (Input.GetKeyDown(KeyCode.E)) {
+			if (hatchetLifes > 0) {
 				UseHatchet();
-			}else {
+			} else {
 				TryCraftHatchet();
 			}
 		}
-		if (Input.GetKeyDown(KeyCode.Q)){
-			if (hasKit){
+		if (Input.GetKeyDown(KeyCode.G))
+		{
+			if (specialHatchetLives > 0)
+			{
+				UseSpecialHatchet();
+			}
+			else
+			{
+				TryCraftSpecialHatchet();
+			}
+		}
+		if (Input.GetKeyDown(KeyCode.Q)) {
+			if (hasKit) {
 				UseKit();
-			}else {
+			} else {
 				TryCraftKit();
 			}
 		}
-		if (Input.GetKeyDown(KeyCode.R)){
+		if (Input.GetKeyDown(KeyCode.R)) {
 			animator.SetTrigger("Pull");
 		}
-		
+		if (Input.GetKeyDown(KeyCode.S))
+		{
+			CastSpell();
+		}
+
+
 	}
 
-	public void UseKit(){
+	public void UseKit() {
 		health += 20;
 		hasKit = false;
 	}
 
-	public void TryCraftKit(){
+	public void TryCraftKit() {
 		if (herbCount > 0) {
 			hasKit = true;
 			herbCount--;
 		}
 	}
-
+	public void TryCraftSpecialHatchet()
+    {
+        if (greenCrystalCount > 1 && herbCount > 0)
+        {
+			hasSpecialHatchet = true;
+			specialHatchetLives = 2;
+			greenCrystalCount -= 2;
+		}
+		herbCount--;
+    }
+	public void CastSpell()
+    {
+        if (CanCastSpell())
+        {
+			herbCount -= 3;
+			var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+            foreach (var enemy in enemies)
+            {
+				enemy.GetComponent<EnemyBehaviour>().enemySpeed -= 0.0020f;
+            }
+        }
+    }
 	public void UseHatchet(){
 		animator.SetTrigger("Smash");
 		if (hatchetLifes >= 0) hatchetLifes--;
 	}
+	public void UseSpecialHatchet()
+    {
+		animator.SetTrigger("Smash");
+		if (specialHatchetLives > 0) specialHatchetLives--;
+        
+		var enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        foreach (var enemy in enemies)
+        {
+			Destroy(enemy.gameObject);
+        }
+	}
 	public void TryCraftHatchet(){
 		if (hasCrystal && herbCount > 0) {
-			hatchetLifes = 10;
+			hatchetLifes = 200;
 			hasCrystal = false;
 			herbCount--;
 		}
 	}
-
+	public bool CanCastSpell()
+    {
+        if (herbCount > 2)
+        {
+			return true;
+        }
+		return false;
+    }
 	// rotates the player and launches running animation, localScale.x mirrors the sprite in the right direction
 	void Move(int leftRight){
 			animator.SetBool("IsRunning", true);
@@ -204,13 +318,18 @@ public class KnightBehaviour : MonoBehaviour {
 		if (other.tag == "CrystalRes" && attackWindowActive) {
 			Animator otherAnimator = other.GetComponent<Animator>();
 			otherAnimator.Play("Blink");
-			if (other.GetComponent<Crystal>().hitsToDestroy <= 0){
-				hasCrystal = true;
+			var crystal = other.GetComponent<Crystal>();
+			if (crystal.hitsToDestroy <= 0){
+                if (crystal.color.Equals("pink"))
+                {
+					hasCrystal = true;
+                }
+                else
+                {
+					greenCrystalCount++;
+                }
 				Destroy(other.gameObject);
 			}
 		}
 	}
-
-
-	
 }
