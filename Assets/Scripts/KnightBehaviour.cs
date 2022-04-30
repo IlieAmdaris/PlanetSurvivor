@@ -70,10 +70,19 @@ public class KnightBehaviour : MonoBehaviour {
 	void Update() {
 		if (!isGameOver)
 		{
+			ChangeSpeedOfFasterEnemies();
 			UpdateInterface();
 			PlayerControls();
 		}
 	}
+	public void ChangeSpeedOfFasterEnemies()
+    {
+		var fasterEnemies = GameObject.FindGameObjectsWithTag("FasterEnemy");
+        foreach (var fasterEnemy in fasterEnemies)
+        {
+			fasterEnemy.GetComponent<EnemyBehaviour>().enemySpeed = 0.0065f;
+        }
+    }
 
 	// synchronize all script properties and flags with UI elements
 	void UpdateInterface() {
@@ -299,6 +308,14 @@ public class KnightBehaviour : MonoBehaviour {
 			Vector3 outOfPlanetDirection = (enemy.transform.position - planet.transform.position).normalized;
 			if (outOfPlanetDirection.y <= -0.35f){
 				enemy.transform.position += outOfPlanetDirection * 1.0f;
+			}
+		}
+		foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("FasterEnemy"))
+		{
+			Vector3 outOfPlanetDirection = (enemy.transform.position - planet.transform.position).normalized;
+			if (outOfPlanetDirection.y <= -0.35f)
+			{
+				enemy.transform.position += outOfPlanetDirection * 1.5f;
 			}
 		}
 

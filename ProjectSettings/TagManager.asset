@@ -16,6 +16,7 @@ TagManager:
   - GreenCrystal1
   - SpecialHatchet
   - Spell
+  - FasterEnemy
   layers:
   - Default
   - TransparentFX
