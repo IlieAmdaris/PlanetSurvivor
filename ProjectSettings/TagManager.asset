@@ -12,6 +12,10 @@ TagManager:
   - Herb1
   - Herb2
   - Herb3
+  - GreenCrystal
+  - GreenCrystal1
+  - SpecialHatchet
+  - Spell
   layers:
   - Default
   - TransparentFX
