@@ -15,7 +15,7 @@ public class KnightBehaviour : MonoBehaviour {
 	private string[] typesOfHerbs;
 	private string[] typesOfCrystals;
 	private int specialHatchetLives;
-	private float health = 1000;
+	private float health = 10000;
 	public string timePlayed;
 	public int herbCount;
 	public bool hasCrystal;
@@ -23,13 +23,11 @@ public class KnightBehaviour : MonoBehaviour {
 	public bool isGameOver;
 	public HUD hud;
 	private bool hasKit;
-	private bool hasSpecialHatchet;
 	private int hatchetLifes;
 	// Use this for initialization
 	void Start() {
 		isGameOver = false;
 		greenCrystalCount = 0;
-		hasSpecialHatchet = false;
 		typesOfHerbs = new string[] { "Herb1", "Herb2", "Herb3" };
 		typesOfCrystals = new string[] { "GreenCrystal", "GreenCrystal1" };
 		Time.timeScale = 1;
@@ -127,7 +125,7 @@ public class KnightBehaviour : MonoBehaviour {
 		}
 		if (greenCrystalCount > 1 && herbCount > 0)
 		{
-			GameObject.FindGameObjectWithTag("SpecialHatchet").GetComponent<Image>().color = Color.green;
+			GameObject.FindGameObjectWithTag("SpecialHatchet").GetComponent<Image>().color = Color.yellow;
 		}
 		else
 		{
@@ -143,7 +141,7 @@ public class KnightBehaviour : MonoBehaviour {
 		}
 		if (greenCrystalCount > 0)
 		{
-			GameObject.FindGameObjectWithTag("GreenCrystal").GetComponent<Image>().color = Color.green;
+			GameObject.FindGameObjectWithTag("GreenCrystal").GetComponent<Image>().color = Color.cyan;
 		}
 		else
 		{
@@ -152,7 +150,7 @@ public class KnightBehaviour : MonoBehaviour {
 		}
 		if (greenCrystalCount > 1)
 		{
-			GameObject.FindGameObjectWithTag("GreenCrystal1").GetComponent<Image>().color = Color.green;
+			GameObject.FindGameObjectWithTag("GreenCrystal1").GetComponent<Image>().color = Color.cyan;
 		}
 		else
 		{
@@ -237,7 +235,6 @@ public class KnightBehaviour : MonoBehaviour {
     {
         if (greenCrystalCount > 1 && herbCount > 0)
         {
-			hasSpecialHatchet = true;
 			specialHatchetLives = 2;
 			greenCrystalCount -= 2;
 		}
